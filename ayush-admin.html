@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayush's Dashboard 💚</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink-bg: #fff0f3; --pink-surface: #fff5f7; --pink-surface-2: #ffeef2;
+  --pink-deep: #ffd6e0; --pink-border: #ffb3c6;
+  --red-accent: #e8405a; --red-hover: #c92d47; --red-light: #ff6b80;
+  --green-accent: #8fbc74; --green-light: #b8d9a3; --green-pale: #d4ecca; --green-deep: #6a9e52;
+  --text: #3a2030; --text-muted: #8a5a6a; --text-faint: #c49aaa; --white: #ffffff;
+  --shadow-sm: 0 2px 8px rgba(232,64,90,0.10); --shadow-md: 0 6px 24px rgba(232,64,90,0.13); --shadow-lg: 0 16px 48px rgba(232,64,90,0.16);
+  --radius-sm:.5rem; --radius-md:.75rem; --radius-lg:1.25rem; --radius-xl:2rem; --radius-full:9999px;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'DM Sans','Helvetica Neue',sans-serif;
+  --transition:200ms cubic-bezier(0.16,1,0.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{min-height:100dvh;font-family:var(--font-body);font-size:1rem;color:var(--text);background:var(--pink-bg);background-image:radial-gradient(circle at 15% 20%,rgba(143,188,116,0.12) 0%,transparent 50%),radial-gradient(circle at 85% 80%,rgba(232,64,90,0.08) 0%,transparent 50%);overflow-x:hidden;}
+button{cursor:pointer;border:none;font:inherit;}
+
+/* LOCK */
+#lockScreen{position:fixed;inset:0;z-index:9999;background:var(--pink-bg);background-image:radial-gradient(circle at 20% 30%,rgba(143,188,116,0.15) 0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(232,64,90,0.10) 0%,transparent 50%);display:flex;align-items:center;justify-content:center;}
+.lock-card{background:white;border-radius:var(--radius-xl);padding:2.5rem 2rem;width:min(380px,90vw);box-shadow:var(--shadow-lg);border:2px solid var(--pink-border);text-align:center;animation:popIn 0.5s cubic-bezier(0.16,1,0.3,1);}
+@keyframes popIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
+.lock-icon{font-size:3rem;margin-bottom:.75rem;animation:heartbeat 1.8s ease-in-out infinite;}
+@keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.2)}28%{transform:scale(1)}42%{transform:scale(1.15)}56%{transform:scale(1)}}
+.lock-card h2{font-family:var(--font-display);font-size:1.6rem;color:var(--red-accent);margin-bottom:.4rem;}
+.lock-card p{color:var(--text-muted);font-size:.88rem;margin-bottom:1.5rem;line-height:1.5;}
+.lock-input-wrap{position:relative;margin-bottom:1rem;}
+.lock-input{width:100%;padding:.85rem 3rem .85rem 1.25rem;border:2px solid var(--pink-border);border-radius:var(--radius-full);font-family:var(--font-body);font-size:1rem;color:var(--text);background:var(--pink-surface);outline:none;transition:border-color var(--transition);text-align:center;letter-spacing:.15em;}
+.lock-input:focus{border-color:var(--red-accent);}
+.lock-input.shake{animation:shake .4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.eye-toggle{position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;color:var(--text-faint);font-size:1.1rem;padding:0;transition:color var(--transition);}
+.eye-toggle:hover{color:var(--red-accent);}
+.lock-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--red-accent),var(--red-light));color:white;font-weight:700;font-size:1rem;border-radius:var(--radius-full);box-shadow:var(--shadow-sm);transition:transform var(--transition),box-shadow var(--transition);}
+.lock-btn:hover{transform:scale(1.02);box-shadow:var(--shadow-md);}
+.lock-error{color:var(--red-accent);font-size:.8rem;margin-top:.6rem;min-height:1.2rem;font-style:italic;}
+
+/* HEARTS */
+.hearts-container{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.floating-heart{position:absolute;bottom:-60px;font-size:1.2rem;animation:floatUp linear infinite;opacity:0;}
+@keyframes floatUp{0%{transform:translateY(0) rotate(0deg);opacity:0}10%{opacity:.7}90%{opacity:.4}100%{transform:translateY(-110vh) rotate(360deg);opacity:0}}
+
+#app{display:none;}
+#app.unlocked{display:block;}
+
+/* LAYOUT */
+.page-wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:2.5rem;padding:2.5rem 1.5rem 2rem;background:var(--white);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);border:1.5px solid var(--pink-border);position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--red-accent),var(--green-accent),var(--red-accent));background-size:200% 100%;animation:shimmerBar 3s linear infinite;}
+@keyframes shimmerBar{0%{background-position:0%}100%{background-position:200%}}
+.header-tag{font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--green-deep);margin-bottom:.5rem;}
+.header h1{font-family:var(--font-display);font-size:clamp(1.8rem,5vw,2.8rem);color:var(--red-accent);line-height:1.1;margin-bottom:.5rem;}
+.header h1 em{color:var(--green-deep);font-style:italic;}
+.header p{color:var(--text-muted);font-size:1rem;max-width:44ch;margin:0 auto;}
+.header-heart{font-size:2.5rem;margin-bottom:.5rem;animation:heartbeat 1.8s ease-in-out infinite;}
+.admin-badge{display:inline-block;background:var(--green-pale);color:var(--green-deep);border:1px solid var(--green-light);border-radius:var(--radius-full);padding:.25rem .85rem;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-sm);border:1.5px solid var(--pink-border);transition:box-shadow var(--transition),transform var(--transition);}
+.card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.card-title{font-family:var(--font-display);font-size:1.1rem;color:var(--red-accent);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;}
+.card-full{grid-column:1/-1;}
+
+/* ADMIN SECTION LABEL */
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green-deep);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.section-label::before{content:"⚙️";font-size:.9rem;}
+
+/* STATS */
+.stat-big{font-family:var(--font-display);font-size:clamp(2.5rem,6vw,3.5rem);color:var(--red-accent);line-height:1;font-weight:700;}
+.stat-label{font-size:.8rem;color:var(--text-muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.08em;}
+.score-bar-track{height:12px;border-radius:var(--radius-full);background:var(--pink-deep);overflow:hidden;margin-top:.5rem;}
+.score-bar-fill{height:100%;border-radius:var(--radius-full);background:linear-gradient(90deg,var(--red-accent),var(--red-light),var(--green-accent));background-size:200% 100%;animation:shimmerBar 2s linear infinite;width:0%;transition:width 1.5s cubic-bezier(0.16,1,0.3,1);}
+.score-number{font-family:var(--font-display);font-size:1.8rem;color:var(--red-accent);}
+
+/* COUNTDOWNS */
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:.75rem;}
+.countdown-unit{text-align:center;}
+.countdown-num{font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--red-accent);background:var(--pink-surface-2);border-radius:var(--radius-md);padding:.4rem .5rem;min-width:52px;display:inline-block;line-height:1;}
+.countdown-lbl{font-size:.65rem;color:var(--text-muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.07em;}
+.countdown-event{font-size:.75rem;color:var(--green-deep);font-weight:600;margin-bottom:.5rem;}
+
+/* WHEEL */
+.wheel-container{display:flex;flex-direction:column;align-items:center;gap:1rem;}
+.wheel-canvas-wrap{position:relative;width:220px;height:220px;}
+.wheel-canvas-wrap canvas{border-radius:50%;box-shadow:var(--shadow-lg);}
+.wheel-pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:22px solid var(--red-accent);filter:drop-shadow(0 2px 4px rgba(232,64,90,.4));z-index:10;}
+.spin-btn{background:var(--red-accent);color:white;font-weight:600;font-size:.9rem;padding:.65rem 2rem;border-radius:var(--radius-full);box-shadow:var(--shadow-sm);transition:background var(--transition),transform var(--transition),box-shadow var(--transition);}
+.spin-btn:hover{background:var(--red-hover);transform:scale(1.04);box-shadow:var(--shadow-md);}
+.wheel-result{font-family:var(--font-display);font-size:1.3rem;color:var(--red-accent);font-style:italic;min-height:2rem;text-align:center;opacity:0;transition:opacity .4s;}
+.wheel-result.show{opacity:1;}
+.nickname-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem;}
+.nickname-tag{background:var(--green-pale);color:var(--green-deep);border-radius:var(--radius-full);padding:.3rem .8rem;font-size:.8rem;font-weight:500;display:flex;align-items:center;gap:.4rem;border:1px solid var(--green-light);}
+.nickname-tag button{background:none;color:var(--green-deep);font-size:.9rem;line-height:1;padding:0;opacity:.6;}
+.nickname-tag button:hover{opacity:1;}
+.add-row{display:flex;gap:.5rem;}
+.add-input{flex:1;border:1.5px solid var(--pink-border);border-radius:var(--radius-full);padding:.5rem 1rem;font-family:var(--font-body);font-size:.85rem;color:var(--text);background:var(--pink-surface);outline:none;transition:border-color var(--transition);}
+.add-input:focus{border-color:var(--red-accent);}
+.add-btn{background:var(--green-accent);color:white;font-weight:600;font-size:.85rem;padding:.5rem 1.1rem;border-radius:var(--radius-full);transition:background var(--transition);}
+.add-btn:hover{background:var(--green-deep);}
+
+/* PHOTOS */
+.photo-btn{width:100%;padding:1.1rem;background:linear-gradient(135deg,var(--red-accent),var(--red-light));color:white;font-weight:600;font-size:1rem;border-radius:var(--radius-lg);box-shadow:var(--shadow-md);transition:transform var(--transition),box-shadow var(--transition);margin-bottom:1rem;}
+.photo-btn:hover{transform:scale(1.02);box-shadow:var(--shadow-lg);}
+.photo-display{display:none;position:relative;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
+.photo-display.show{display:block;animation:popIn .4s cubic-bezier(0.16,1,0.3,1);}
+.photo-display img{width:100%;max-height:300px;object-fit:cover;}
+.photo-caption{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.65));color:white;padding:1.5rem 1rem .8rem;font-size:.9rem;font-style:italic;}
+.photo-counter{text-align:right;font-size:.75rem;color:var(--text-faint);margin-top:.4rem;}
+
+/* CAPTION EDITOR */
+.caption-list{display:flex;flex-direction:column;gap:.5rem;max-height:220px;overflow-y:auto;padding-right:.25rem;}
+.caption-item{display:flex;gap:.5rem;align-items:center;}
+.caption-num{font-size:.75rem;color:var(--text-faint);font-weight:600;min-width:1.4rem;}
+.caption-input-field{flex:1;border:1.5px solid var(--pink-border);border-radius:var(--radius-md);padding:.4rem .75rem;font-family:var(--font-body);font-size:.82rem;color:var(--text);background:var(--pink-surface);outline:none;transition:border-color var(--transition);}
+.caption-input-field:focus{border-color:var(--red-accent);}
+.photo-count-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;}
+.photo-count-label{font-size:.82rem;color:var(--text-muted);}
+.photo-count-input{width:70px;border:1.5px solid var(--pink-border);border-radius:var(--radius-md);padding:.4rem .75rem;font-family:var(--font-body);font-size:.85rem;color:var(--text);background:var(--pink-surface);outline:none;text-align:center;}
+.save-btn{background:var(--green-accent);color:white;font-weight:600;font-size:.8rem;padding:.45rem 1rem;border-radius:var(--radius-full);transition:background var(--transition);}
+.save-btn:hover{background:var(--green-deep);}
+
+/* NUDGE */
+.nudge-btn{width:100%;padding:1.1rem;background:linear-gradient(135deg,var(--green-accent),var(--green-deep));color:white;font-weight:700;font-size:1rem;border-radius:var(--radius-lg);box-shadow:var(--shadow-md);transition:transform var(--transition),box-shadow var(--transition);margin-bottom:.75rem;}
+.nudge-btn:hover{transform:scale(1.02);box-shadow:var(--shadow-lg);}
+.nudge-status{text-align:center;font-size:.85rem;color:var(--green-deep);min-height:1.4rem;font-style:italic;}
+.nudge-msg-input{width:100%;border:1.5px solid var(--pink-border);border-radius:var(--radius-md);padding:.5rem 1rem;font-family:var(--font-body);font-size:.85rem;color:var(--text);background:var(--pink-surface);outline:none;margin-bottom:.6rem;}
+.nudge-msg-input:focus{border-color:var(--green-accent);}
+
+/* FART */
+.fart-section{text-align:center;}
+.fart-btn{background:var(--pink-deep);border:2px dashed var(--pink-border);color:var(--text-muted);font-size:.85rem;font-weight:600;padding:.7rem 1.5rem;border-radius:var(--radius-full);transition:all var(--transition);}
+.fart-btn:hover{background:var(--pink-border);color:var(--text);transform:scale(1.03);}
+.fart-btn:active{transform:scale(.95) rotate(-2deg);}
+.fart-counter{font-size:.7rem;color:var(--text-faint);margin-top:.4rem;}
+.fart-emoji-burst{position:fixed;pointer-events:none;z-index:9999;font-size:1.8rem;animation:fartBurst 1s forwards;}
+@keyframes fartBurst{0%{transform:translate(-50%,-50%) scale(.5);opacity:1}60%{transform:translate(-50%,-150%) scale(1.3);opacity:1}100%{transform:translate(-50%,-250%) scale(.8);opacity:0}}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;pointer-events:none;z-index:9998;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.2s forwards;}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(200px) rotate(720deg);opacity:0}}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:white;padding:.65rem 1.4rem;border-radius:var(--radius-full);font-size:.85rem;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;transition:transform .4s cubic-bezier(0.16,1,0.3,1),opacity .4s;opacity:0;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* FOOTER */
+.footer{text-align:center;margin-top:3rem;color:var(--text-faint);font-size:.78rem;}
+.footer span{color:var(--red-accent);}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <h2>Ayush's Dashboard</h2>
+    <p>Admin access only 😤<br>Enter your password to manage everything.</p>
+    <div class="lock-input-wrap">
+      <input class="lock-input" id="lockInput" type="password" placeholder="enter password..." autocomplete="off" maxlength="40">
+      <button class="eye-toggle" onclick="toggleEye()" aria-label="toggle visibility">👁️</button>
+    </div>
+    <button class="lock-btn" onclick="tryUnlock()">Let Me In 💪</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
+<!-- HEARTS -->
+<div class="hearts-container" id="heartsContainer"></div>
+
+<!-- APP -->
+<div id="app">
+<div class="page-wrap">
+
+  <header class="header">
+    <div class="header-heart">💚</div>
+    <div class="admin-badge">⚙️ Admin View</div>
+    <div class="header-tag">18 months of us ✨</div>
+    <h1>Ayush's <em>Control Panel</em> 🛠️</h1>
+    <p>Manage Anwitha's app from here — nicknames, captions, nudge messages & more.</p>
+  </header>
+
+  <!-- STATS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">❤️ Days Together</div>
+      <div class="stat-big" id="daysTogether">0</div>
+      <div class="stat-label">days of being her fav person</div>
+    </div>
+    <div class="card">
+      <div class="card-title">💘 Couple Score</div>
+      <div class="score-number">100%</div>
+      <div class="stat-label">certified soulmates</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="scoreBar"></div></div>
+    </div>
+  </div>
+
+  <!-- COUNTDOWNS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🗓️ Next Month-iversary</div>
+      <div class="countdown-event" id="nextMonthLabel">—</div>
+      <div class="countdown-grid">
+        <div class="countdown-unit"><span class="countdown-num" id="m1d">00</span><div class="countdown-lbl">days</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m1h">00</span><div class="countdown-lbl">hrs</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m1m">00</span><div class="countdown-lbl">min</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m1s">00</span><div class="countdown-lbl">sec</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎉 2-Year Anniversary</div>
+      <div class="countdown-event">Oct 5th, 2026 🥳</div>
+      <div class="countdown-grid">
+        <div class="countdown-unit"><span class="countdown-num" id="m2d">00</span><div class="countdown-lbl">days</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m2h">00</span><div class="countdown-lbl">hrs</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m2m">00</span><div class="countdown-lbl">min</div></div>
+        <div class="countdown-unit"><span class="countdown-num" id="m2s">00</span><div class="countdown-lbl">sec</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NICKNAME EDITOR -->
+  <div class="card card-full" style="margin-bottom:1.25rem">
+    <div class="card-title">🎡 Nickname Wheel Editor</div>
+    <div class="section-label">manage nicknames on the wheel</div>
+    <div class="wheel-container">
+      <div class="wheel-canvas-wrap">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheelCanvas" width="220" height="220"></canvas>
+      </div>
+      <button class="spin-btn" onclick="spinWheel()">✨ Test Spin</button>
+      <div class="wheel-result" id="wheelResult"></div>
+      <div style="width:100%;margin-top:.5rem">
+        <div class="nickname-tags" id="nicknameTags"></div>
+        <div class="add-row">
+          <input class="add-input" id="nicknameInput" type="text" placeholder="Add nickname..." maxlength="30">
+          <button class="add-btn" onclick="addNickname()">+ Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHOTO + CAPTION EDITOR -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📸 Photo Preview</div>
+      <button class="photo-btn" onclick="showRandomPhoto()">🎲 Test Random Photo</button>
+      <div class="photo-display" id="photoDisplay">
+        <img id="photoImg" src="" alt="photo preview" loading="lazy">
+        <div class="photo-caption" id="photoCaption"></div>
+      </div>
+      <div class="photo-counter" id="photoCounter"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">✏️ Caption Editor</div>
+      <div class="section-label">edit captions for each photo</div>
+      <div class="photo-count-row">
+        <span class="photo-count-label">Total photos:</span>
+        <input class="photo-count-input" id="photoCountInput" type="number" min="1" max="100" value="10">
+        <button class="save-btn" onclick="updatePhotoCount()">Update</button>
+      </div>
+      <div class="caption-list" id="captionList"></div>
+    </div>
+  </div>
+
+  <!-- NUDGE + FART -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">💌 Send Anwitha a Nudge</div>
+      <div class="section-label">customize your message</div>
+      <input class="nudge-msg-input" id="nudgeMsgInput" type="text" placeholder="Type your message..." value="hey sweetie pie, thinking of you 💚" maxlength="120">
+      <button class="nudge-btn" onclick="sendNudge()">💚 Send Nudge</button>
+      <div class="nudge-status" id="nudgeStatus"></div>
+      <p style="font-size:.75rem;color:var(--text-faint);margin-top:.5rem;font-style:italic;">Her button always sends: "im thinking of you :)"</p>
+    </div>
+    <div class="card">
+      <div class="card-title">💨 The Button (Test Mode)</div>
+      <div class="fart-section" style="margin-top:.5rem">
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;">You can press it too, bestie 💀</p>
+        <button class="fart-btn" onclick="fartButton(event)">🍑 toot toot</button>
+        <div class="fart-counter" id="fartCounter">toots released: 0</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ======== CONFIG ========
+const PASSWORD = "ChittiBabu";
+const ANNIVERSARY_DATE = new Date("2024-10-05T00:00:00");
+const NTFY_TOPIC = "miniPKtooter";
+
+let photoCount = 10;
+let photoCaptions = [
+  "caught lacking 💀",
+  "the face she makes when she's hungry 😭",
+  "candid queen 👑",
+  "no warning before this one 😂",
+  "idk what was happening here lmaoo",
+  "she's gonna kill me for this one 💀",
+  "my little tooter 💨",
+  "peak candid energy rn",
+  "she said she looks cute... 🤔",
+  "the realest photo in existence",
+];
+let nicknames = ["sweetie pie","pumpkin pie","muffin","cupcake","peanut","buttercup"];
+// ======== END CONFIG ========
+
+// LOCK
+function toggleEye(){const i=document.getElementById("lockInput");i.type=i.type==="password"?"text":"password";}
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("lockInput").addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock();});
+});
+function tryUnlock(){
+  const val=document.getElementById("lockInput").value;
+  const err=document.getElementById("lockError");
+  if(val===PASSWORD){
+    document.getElementById("lockScreen").style.display="none";
+    document.getElementById("app").classList.add("unlocked");
+    initApp();
+  } else {
+    err.textContent="nope! wrong password 🔒";
+    const inp=document.getElementById("lockInput");
+    inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); inp.value="";
+    setTimeout(()=>err.textContent="",2500);
+  }
+}
+
+function initApp(){
+  // hearts
+  const c=document.getElementById("heartsContainer");
+  ["💚","🩷","❤️","💕","🫶","💗"].forEach((h,_,arr)=>{
+    for(let i=0;i<3;i++){
+      const el=document.createElement("span"); el.className="floating-heart";
+      el.textContent=arr[Math.floor(Math.random()*arr.length)];
+      el.style.left=Math.random()*100+"%"; el.style.fontSize=(0.8+Math.random()*1)+"rem";
+      el.style.animationDuration=(8+Math.random()*12)+"s"; el.style.animationDelay=(Math.random()*12)+"s";
+      c.appendChild(el);
+    }
+  });
+  // days
+  const now=new Date(), diff=Math.floor((now-ANNIVERSARY_DATE)/(1000*60*60*24));
+  const el=document.getElementById("daysTogether"); let cur=0;
+  const t=setInterval(()=>{cur+=Math.ceil(diff/60);if(cur>=diff){cur=diff;clearInterval(t);}el.textContent=cur.toLocaleString();},16);
+  setTimeout(()=>{document.getElementById("scoreBar").style.width="100%";},300);
+  updateCountdowns(); setInterval(updateCountdowns,1000);
+  renderTags(); renderCaptionList();
+  spawnConfetti(window.innerWidth/2, window.innerHeight/3);
+}
+
+// COUNTDOWNS
+function pad(n){return String(n).padStart(2,"0");}
+function updateCountdowns(){
+  const now=new Date();
+  const months=Math.floor((now-ANNIVERSARY_DATE)/(1000*60*60*24*30.44));
+  const nextAnn=new Date(ANNIVERSARY_DATE); nextAnn.setMonth(nextAnn.getMonth()+months+1);
+  const d1=nextAnn-now;
+  if(d1>0){
+    document.getElementById("m1d").textContent=pad(Math.floor(d1/(1000*60*60*24)));
+    document.getElementById("m1h").textContent=pad(Math.floor((d1%(1000*60*60*24))/(1000*60*60)));
+    document.getElementById("m1m").textContent=pad(Math.floor((d1%(1000*60*60))/(1000*60)));
+    document.getElementById("m1s").textContent=pad(Math.floor((d1%(1000*60))/1000));
+    document.getElementById("nextMonthLabel").textContent=(months+1)+" months — "+nextAnn.toLocaleDateString("en-US",{month:"long",day:"numeric"});
+  }
+  const twoYear=new Date("2026-10-05T00:00:00"), d2=twoYear-now;
+  if(d2>0){
+    document.getElementById("m2d").textContent=pad(Math.floor(d2/(1000*60*60*24)));
+    document.getElementById("m2h").textContent=pad(Math.floor((d2%(1000*60*60*24))/(1000*60*60)));
+    document.getElementById("m2m").textContent=pad(Math.floor((d2%(1000*60*60))/(1000*60)));
+    document.getElementById("m2s").textContent=pad(Math.floor((d2%(1000*60))/1000));
+  } else {["m2d","m2h","m2m","m2s"].forEach(id=>document.getElementById(id).textContent="🎉");}
+}
+
+// WHEEL
+const WHEEL_COLORS=["#f28b9a","#b8d9a3","#ffc5ce","#8fbc74","#ffb3c6","#d4ecca","#e8405a","#6a9e52"];
+let spinning=false, currentAngle=0;
+function drawWheel(){
+  const canvas=document.getElementById("wheelCanvas"), ctx=canvas.getContext("2d"), cx=110,cy=110,r=105;
+  ctx.clearRect(0,0,220,220);
+  const n=nicknames.length; if(!n)return;
+  const slice=(Math.PI*2)/n;
+  for(let i=0;i<n;i++){
+    const start=currentAngle+i*slice,end=start+slice;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length];ctx.fill();
+    ctx.strokeStyle="white";ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(start+slice/2);
+    ctx.textAlign="right";ctx.fillStyle="white";ctx.font="bold 13px 'DM Sans',sans-serif";
+    ctx.shadowColor="rgba(0,0,0,.3)";ctx.shadowBlur=3;ctx.fillText(nicknames[i],r-10,5);ctx.restore();
+  }
+  ctx.beginPath();ctx.arc(cx,cy,18,0,Math.PI*2);ctx.fillStyle="white";ctx.fill();
+  ctx.strokeStyle="#ffb3c6";ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle="#e8405a";ctx.font="16px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("💚",cx,cy);
+}
+function spinWheel(){
+  if(spinning||!nicknames.length)return; spinning=true;
+  document.getElementById("wheelResult").classList.remove("show");
+  const target=currentAngle+(5+Math.random()*5)*Math.PI*2+(Math.random()*Math.PI*2);
+  const dur=3500,start=performance.now(),startA=currentAngle;
+  function animate(now){
+    const p=Math.min((now-start)/dur,1),ease=1-Math.pow(1-p,4);
+    currentAngle=startA+(target-startA)*ease; drawWheel();
+    if(p<1){requestAnimationFrame(animate);}
+    else{
+      spinning=false;
+      const slice=(Math.PI*2)/nicknames.length;
+      const norm=(((-currentAngle%(Math.PI*2))+(Math.PI*2))%(Math.PI*2));
+      const idx=Math.floor(norm/slice)%nicknames.length;
+      const name=nicknames[(nicknames.length-1-idx+nicknames.length)%nicknames.length];
+      const res=document.getElementById("wheelResult");
+      res.textContent="Today she's your "+name+" 💚"; res.classList.add("show");
+      spawnConfetti(window.innerWidth/2,300);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+function renderTags(){
+  const c=document.getElementById("nicknameTags"); c.innerHTML="";
+  nicknames.forEach((n,i)=>{
+    const t=document.createElement("div");t.className="nickname-tag";
+    t.innerHTML=n+'<button onclick="removeNickname('+i+')" aria-label="remove">×</button>';
+    c.appendChild(t);
+  });
+  drawWheel();
+}
+function addNickname(){
+  const inp=document.getElementById("nicknameInput"),val=inp.value.trim();
+  if(!val)return; nicknames.push(val); inp.value=""; renderTags();
+  showToast("Added '"+val+"' 🎉 — her wheel is updated!");
+}
+function removeNickname(i){const r=nicknames[i];nicknames.splice(i,1);renderTags();showToast("'"+r+"' removed from wheel");}
+document.addEventListener("DOMContentLoaded",()=>{
+  const ni=document.getElementById("nicknameInput");
+  if(ni)ni.addEventListener("keydown",e=>{if(e.key==="Enter")addNickname();});
+});
+
+// CAPTION EDITOR
+function renderCaptionList(){
+  const list=document.getElementById("captionList"); list.innerHTML="";
+  for(let i=0;i<photoCount;i++){
+    const row=document.createElement("div"); row.className="caption-item";
+    row.innerHTML='<span class="caption-num">'+(i+1)+'.</span><input class="caption-input-field" data-idx="'+i+'" value="'+( photoCaptions[i]||"").replace(/"/g,"&quot;") +'" placeholder="Caption for photo '+(i+1)+'...">';
+    list.appendChild(row);
+  }
+  list.querySelectorAll(".caption-input-field").forEach(inp=>{
+    inp.addEventListener("change",e=>{
+      photoCaptions[parseInt(e.target.dataset.idx)]=e.target.value;
+      showToast("Caption saved ✅");
+    });
+  });
+}
+function updatePhotoCount(){
+  const val=parseInt(document.getElementById("photoCountInput").value)||10;
+  photoCount=Math.max(1,Math.min(100,val));
+  renderCaptionList(); showToast("Photo count updated to "+photoCount);
+}
+
+// PHOTOS
+let lastPhotoIdx=-1;
+function showRandomPhoto(){
+  if(!photoCount){showToast("No photos!");return;}
+  let idx; do{idx=Math.floor(Math.random()*photoCount)+1;}while(idx===lastPhotoIdx&&photoCount>1);
+  lastPhotoIdx=idx;
+  const display=document.getElementById("photoDisplay"),img=document.getElementById("photoImg");
+  display.classList.remove("show");
+  img.src="photos/"+idx+".jpg";
+  img.onerror=()=>{img.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect fill="%23ffd6e0" width="400" height="250"/><text x="200" y="120" font-size="40" text-anchor="middle">📸</text><text x="200" y="160" font-size="13" text-anchor="middle" fill="%23e8405a">photos/'+(idx)+'.jpg not found</text></svg>';};
+  document.getElementById("photoCaption").textContent=photoCaptions[idx-1]||"";
+  document.getElementById("photoCounter").textContent="photo "+idx+" of "+photoCount;
+  requestAnimationFrame(()=>display.classList.add("show"));
+}
+
+// NUDGE
+let nudgeCooldownEnd=0;
+async function sendNudge(){
+  const now=Date.now();
+  if(now<nudgeCooldownEnd){document.getElementById("nudgeStatus").textContent="wait "+(Math.ceil((nudgeCooldownEnd-now)/1000))+"s 😅";return;}
+  nudgeCooldownEnd=now+15000;
+  const msg=document.getElementById("nudgeMsgInput").value||"thinking of you 💚";
+  document.getElementById("nudgeStatus").textContent="sending... 💌";
+  try{
+    await fetch("https://ntfy.sh/"+NTFY_TOPIC,{method:"POST",headers:{"Title":"💚 from Ayush","Priority":"default","Tags":"green_heart"},body:msg});
+    document.getElementById("nudgeStatus").textContent="sent! '"+msg+"' 🥹";
+    spawnConfetti(window.innerWidth/2,window.innerHeight/2);
+  }catch(e){document.getElementById("nudgeStatus").textContent="something went wrong 😕";}
+  setTimeout(()=>{document.getElementById("nudgeStatus").textContent="";},5000);
+}
+
+// FART
+let fartCount=0;
+function fartButton(e){
+  fartCount++; document.getElementById("fartCounter").textContent="toots released: "+fartCount;
+  const emojis=["💨","🌬️","☁️","💀","😂"];
+  for(let i=0;i<3;i++){
+    const el=document.createElement("span");el.className="fart-emoji-burst";
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.left=(e.clientX+Math.random()*60-30)+"px";el.style.top=e.clientY+"px";
+    el.style.animationDelay=(i*.1)+"s"; document.body.appendChild(el); setTimeout(()=>el.remove(),1200);
+  }
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const buf=ctx.createBuffer(1,ctx.sampleRate*.5,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*.15))*(0.5+0.5*Math.sin(i*.05));
+    const src=ctx.createBufferSource();src.buffer=buf;
+    const gain=ctx.createGain();gain.gain.value=0.4;
+    src.connect(gain);gain.connect(ctx.destination);src.start();
+  }catch(err){}
+  showToast("💨 toot toot 💀");
+}
+
+// CONFETTI
+function spawnConfetti(x,y){
+  const colors=["#e8405a","#8fbc74","#ffc5ce","#b8d9a3","#ffb3c6","#d4ecca","white"];
+  for(let i=0;i<30;i++){
+    const el=document.createElement("div");el.className="confetti-piece";
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.left=(x+Math.random()*120-60)+"px";el.style.top=(y+Math.random()*40-20)+"px";
+    el.style.transform="rotate("+Math.random()*360+"deg)";
+    el.style.animationDuration=(0.8+Math.random()*.6)+"s";el.style.animationDelay=(Math.random()*.3)+"s";
+    document.body.appendChild(el);setTimeout(()=>el.remove(),1600);
+  }
+}
+
+// TOAST
+let toastTimer;
+function showToast(msg){
+  const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),3000);
+}
+</script>
+
+<footer class="footer">ayush's admin panel &nbsp;·&nbsp; made with <span>♥</span></footer>
+</body>
+</html>
