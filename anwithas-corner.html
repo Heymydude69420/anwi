@@ -376,6 +376,7 @@ button{cursor:pointer;border:none;font:inherit;}
         <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem;">you know what this does 💀</p>
         <button class="fart-btn" onclick="fartButton(event)">🍑 toot toot</button>
         <div class="fart-counter" id="fartCounter">toots released: 0</div>
+        
       </div>
     </div>
   </div>
@@ -390,7 +391,7 @@ button{cursor:pointer;border:none;font:inherit;}
 const PASSWORD = "Fyard";
 const ANNIVERSARY_DATE = new Date("2024-10-05T00:00:00");
 const NTFY_TOPIC = "miniPKtooter";
-let photoCount = 10;
+let photoCount = 90;
 
 // nicknames — only editable from ayush-admin.html
 let nicknames = ["sweetie pie","pumpkin pie","muffin","cupcake","peanut","buttercup"];
@@ -572,12 +573,23 @@ function fartButton(e){
   }
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const buf=ctx.createBuffer(1,ctx.sampleRate*.5,ctx.sampleRate);
+    const sr=ctx.sampleRate, dur=0.6+Math.random()*0.5;
+    const buf=ctx.createBuffer(1,sr*dur,sr);
     const data=buf.getChannelData(0);
-    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*.15))*(0.5+0.5*Math.sin(i*.05));
+    // layered fart: low rumble + sputtering flutter + noise
+    for(let i=0;i<data.length;i++){
+      const t=i/sr;
+      const env=Math.exp(-t*3.5)*(1+0.6*Math.sin(2*Math.PI*t*14+Math.sin(2*Math.PI*t*7)));
+      const rumble=Math.sin(2*Math.PI*(55+20*Math.sin(2*Math.PI*t*2.5))*t);
+      const flutter=(Math.random()*2-1)*Math.pow(Math.max(0,1-t/dur),0.4);
+      const wet=(Math.random()*2-1)*0.15;
+      data[i]=env*(rumble*0.55+flutter*0.35+wet)*0.55;
+    }
     const src=ctx.createBufferSource();src.buffer=buf;
-    const gain=ctx.createGain();gain.gain.value=0.4;
-    src.connect(gain);gain.connect(ctx.destination);src.start();
+    const gain=ctx.createGain();gain.gain.value=0.7;
+    // low-pass to make it sound wet/bassy
+    const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=600;filter.Q.value=1.2;
+    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);src.start();
   }catch(err){}
   showToast("💨 toot toot 💀");
 }
