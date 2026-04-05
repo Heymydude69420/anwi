@@ -496,9 +496,14 @@ function spinSlot(){
   btn.textContent = "🎰 spinning…";
   res.classList.remove("show");
 
-  reel.style.transition = "transform 2.4s cubic-bezier(0.12, 0.8, 0.18, 1)";
+  // double rAF: first frame sets transition, second applies transform
+  reel.style.transition = "none";
+  reel.style.transform = `translateY(-${parseInt(reel.dataset.index||'0')*ITEM_H}px)`;
   requestAnimationFrame(() => {
-    reel.style.transform = `translateY(-${finalIndex*ITEM_H}px)`;
+    requestAnimationFrame(() => {
+      reel.style.transition = "transform 2.4s cubic-bezier(0.12, 0.8, 0.18, 1)";
+      reel.style.transform = `translateY(-${finalIndex*ITEM_H}px)`;
+    });
   });
 
   const onDone = () => {
@@ -541,17 +546,12 @@ async function sendNudge(){
   nudgeCooldownEnd=now+30000;
   status.textContent="sending your nudge... 💌";
   try{
-    const resp = await fetch("https://ntfy.sh/"+NTFY_TOPIC,{
+    // no-cors: browser won't expose response but the POST still reaches ntfy.sh
+    await fetch("https://ntfy.sh/"+NTFY_TOPIC,{
       method:"POST",
-      headers:{
-        "Content-Type":"text/plain",
-        "Title":"💚 Anwi nudge",
-        "Priority":"default",
-        "Tags":"green_heart,heartbeat"
-      },
+      mode:"no-cors",
       body:"Anwi is thinking of you right now 🥹💚"
     });
-    if(!resp.ok) throw new Error("publish failed");
     status.textContent="nudge sent! check the ntfy app 💚";
     spawnConfetti(window.innerWidth/2,window.innerHeight/2);
   }catch(e){
