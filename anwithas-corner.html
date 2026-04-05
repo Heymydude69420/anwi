@@ -35,8 +35,7 @@ button{cursor:pointer;border:none;font:inherit;}
   display:flex;align-items:center;justify-content:center;}
 .lock-card{background:white;border-radius:var(--radius-xl);padding:2.5rem 2rem;width:min(380px,90vw);
   box-shadow:var(--shadow-lg);border:2px solid var(--pink-border);text-align:center;
-  animation:
-  popIn .5s cubic-bezier(0.16,1,0.3,1);}
+  animation:popIn .5s cubic-bezier(0.16,1,0.3,1);}
 @keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 .lock-icon{font-size:3rem;margin-bottom:.75rem;animation:heartbeat 1.8s ease-in-out infinite;}
 @keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.2)}28%{transform:scale(1)}42%{transform:scale(1.15)}56%{transform:scale(1)}}
@@ -274,6 +273,11 @@ button{cursor:pointer;border:none;font:inherit;}
   <!-- GREETING -->
   <div class="greeting-banner" id="greetingBanner">
     <div class="greeting-icon" id="greetingIcon">☀️</div>
+    <div class="greeting-text">
+      <div class="greeting-line" id="greetingLine">Good morning, Anwi 💚</div>
+      <div class="greeting-sub" id="greetingSub">Hope today is as cute as you are</div>
+    </div>
+  </div>
 
   <!-- BUCKET LIST -->
   <div class="card card-full" style="margin-bottom:1.25rem">
@@ -289,21 +293,7 @@ button{cursor:pointer;border:none;font:inherit;}
         <input class="bucket-input" id="bucketInput" type="text" placeholder="Add something new..." maxlength="80">
         <button class="bucket-add-btn" onclick="addBucketItem()">+ Add</button>
       </div>
-
-
-  
-
-  
       <div class="bucket-progress" id="bucketProgress"></div>
-    </div>
-  </div>
-
-  
-
-  
-    <div class="greeting-text">
-      <div class="greeting-line" id="greetingLine">Good morning, Anwi 💚</div>
-      <div class="greeting-sub" id="greetingSub">Hope today is as cute as you are</div>
     </div>
   </div>
 
@@ -435,16 +425,19 @@ function initApp(){
 function pad(n){return String(n).padStart(2,"0");}
 function updateCountdowns(){
   const now=new Date();
-  const months=Math.floor((now-ANNIVERSARY_DATE)/(1000*60*60*24*30.44));
-  const nextAnn=new Date(ANNIVERSARY_DATE);nextAnn.setMonth(nextAnn.getMonth()+months+1);
+  // Compute the next monthiversary: take the anniversary day in the current
+  // calendar month; if that moment is already past (or is right now), step
+  // forward one month so d1 is always positive and the countdown ticks.
+  const annDay=ANNIVERSARY_DATE.getDate();
+  const nextAnn=new Date(now.getFullYear(),now.getMonth(),annDay,0,0,0,0);
+  if(nextAnn<=now) nextAnn.setMonth(nextAnn.getMonth()+1);
+  const monthNum=(nextAnn.getFullYear()-ANNIVERSARY_DATE.getFullYear())*12+(nextAnn.getMonth()-ANNIVERSARY_DATE.getMonth());
   const d1=nextAnn-now;
-  if(d1>0){
-    document.getElementById("m1d").textContent=pad(Math.floor(d1/(1000*60*60*24)));
-    document.getElementById("m1h").textContent=pad(Math.floor((d1%(1000*60*60*24))/(1000*60*60)));
-    document.getElementById("m1m").textContent=pad(Math.floor((d1%(1000*60*60))/(1000*60)));
-    document.getElementById("m1s").textContent=pad(Math.floor((d1%(1000*60))/1000));
-    document.getElementById("nextMonthLabel").textContent=(months+1)+" months — "+nextAnn.toLocaleDateString("en-US",{month:"long",day:"numeric"});
-  }
+  document.getElementById("m1d").textContent=pad(Math.floor(d1/(1000*60*60*24)));
+  document.getElementById("m1h").textContent=pad(Math.floor((d1%(1000*60*60*24))/(1000*60*60)));
+  document.getElementById("m1m").textContent=pad(Math.floor((d1%(1000*60*60))/(1000*60)));
+  document.getElementById("m1s").textContent=pad(Math.floor((d1%(1000*60))/1000));
+  document.getElementById("nextMonthLabel").textContent=monthNum+" months — "+nextAnn.toLocaleDateString("en-US",{month:"long",day:"numeric"});
   const twoYear=new Date("2026-10-05T00:00:00"),d2=twoYear-now;
   if(d2>0){
     document.getElementById("m2d").textContent=pad(Math.floor(d2/(1000*60*60*24)));
@@ -509,7 +502,13 @@ function spinSlot(){
 
   const onDone = () => {
     reel.removeEventListener('transitionend', onDone);
-    reel.dataset.index = String(finalIndex);
+    // Snap the reel silently back to centre so we never scroll past the
+    // end of the DOM list — same item stays visible, no flash.
+    const chosenMod = finalIndex % nicknames.length;
+    const resetIndex = Math.floor(30/2) * nicknames.length + chosenMod;
+    reel.style.transition = 'none';
+    reel.style.transform = `translateY(-${resetIndex * ITEM_H}px)`;
+    reel.dataset.index = String(resetIndex);
     slotSpinning = false;
     btn.disabled = false;
     btn.textContent = "✨ Pull again!";
@@ -528,11 +527,15 @@ function showRandomPhoto(){
   lastPhotoIdx=idx;
   const display=document.getElementById("photoDisplay"),img=document.getElementById("photoImg");
   display.classList.remove("show");
-  img.src="photos/"+idx+".jpg";
+  // Attach handlers BEFORE setting src so cached-image synchronous fires
+  // are never missed and the fallback always triggers show too.
+  img.onload=()=>{ display.classList.add("show"); };
   img.onerror=()=>{
+    img.onerror=null; // prevent infinite error loop
+    img.onload=()=>{ display.classList.add("show"); };
     img.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260"><rect fill="%23ffd6e0" width="400" height="260"/><text x="200" y="130" font-size="48" text-anchor="middle">📸</text><text x="200" y="170" font-size="13" text-anchor="middle" fill="%23e8405a">photos coming soon!</text></svg>';
   };
-  requestAnimationFrame(()=>display.classList.add("show"));
+  img.src="photos/"+idx+".jpg";
 }
 
 // NUDGE
@@ -553,7 +556,7 @@ async function sendNudge(){
       mode:"no-cors",
       body:"Anwi is thinking of you right now 🥹💚"
     });
-    status.textContent="nudge sent! check the ntfy app 💚";
+    status.textContent="Nudge sent, he will see it soon! 💚";
     spawnConfetti(window.innerWidth/2,window.innerHeight/2);
   }catch(e){
     status.textContent="nudge failed — make sure your phone is subscribed to the exact topic name";
