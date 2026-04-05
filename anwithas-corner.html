@@ -35,7 +35,8 @@ button{cursor:pointer;border:none;font:inherit;}
   display:flex;align-items:center;justify-content:center;}
 .lock-card{background:white;border-radius:var(--radius-xl);padding:2.5rem 2rem;width:min(380px,90vw);
   box-shadow:var(--shadow-lg);border:2px solid var(--pink-border);text-align:center;
-  animation:popIn .5s cubic-bezier(0.16,1,0.3,1);}
+  animation:
+  popIn .5s cubic-bezier(0.16,1,0.3,1);}
 @keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 .lock-icon{font-size:3rem;margin-bottom:.75rem;animation:heartbeat 1.8s ease-in-out infinite;}
 @keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.2)}28%{transform:scale(1)}42%{transform:scale(1.15)}56%{transform:scale(1)}}
