@@ -271,14 +271,6 @@ button{cursor:pointer;border:none;font:inherit;}
 <div class="page-wrap">
 
   
-  <!-- GREETING -->
-  <div class="greeting-banner" id="greetingBanner">
-    <div class="greeting-icon" id="greetingIcon">☀️</div>
-    <div class="greeting-text">
-      <div class="greeting-line" id="greetingLine">Good morning, Anwi 💚</div>
-      <div class="greeting-sub" id="greetingSub">Hope today is as cute as you are</div>
-    </div>
-  </div>
 
   <!-- BUCKET LIST -->
   <div class="card card-full" style="margin-bottom:1.25rem">
@@ -304,6 +296,15 @@ button{cursor:pointer;border:none;font:inherit;}
     <h1>Anwi's<br><em>Little Corner</em> 🌸</h1>
     <p>Made with love by Ayush 💕</p>
   </header>
+
+  <!-- GREETING -->
+  <div class="greeting-banner" id="greetingBanner">
+    <div class="greeting-icon" id="greetingIcon">☀️</div>
+    <div class="greeting-text">
+      <div class="greeting-line" id="greetingLine">Good morning, Anwi 💚</div>
+      <div class="greeting-sub" id="greetingSub">Hope today is as cute as you are</div>
+    </div>
+  </div>
 
   <div class="grid-2">
     <div class="card">
@@ -460,69 +461,69 @@ function updateCountdowns(){
   } else {["m2d","m2h","m2m","m2s"].forEach(id=>document.getElementById(id).textContent="🎉");}
 }
 
-// SLOT MACHINE
+// SLOT MACHINE — fixed infinite scroll approach
 const ITEM_H = 36;
 let slotSpinning = false;
-let reelItems = [];
+let currentSlotName = "";
 
 function buildReel(){
+  if(!nicknames.length) return;
   const reel = document.getElementById("slotReel");
   reel.innerHTML = "";
-  // build a long looping list for smooth animation
-  reelItems = [];
-  const repeat = 6;
-  for(let r=0;r<repeat;r++){
+  // render 40 copies so we never run out during animation
+  for(let r=0;r<40;r++){
     nicknames.forEach(n=>{
       const div=document.createElement("div");
       div.className="slot-item";div.textContent=n;
-      reel.appendChild(div);reelItems.push(n);
+      reel.appendChild(div);
     });
   }
-  // start positioned in middle of the list
-  const mid = Math.floor(reelItems.length/2) * ITEM_H;
-  reel.style.transform = `translateY(-${mid}px)`;
-  reel._offset = mid;
+  // reset to top
+  reel.style.transition="none";
+  reel.style.transform="translateY(0px)";
+  reel._pos = 0;
 }
 
 function spinSlot(){
-  if(slotSpinning||!nicknames.length)return;
+  if(slotSpinning||!nicknames.length) return;
   slotSpinning=true;
   const btn=document.getElementById("slotBtn");
-  btn.disabled=true;btn.textContent="🎰 spinning…";
+  btn.disabled=true; btn.textContent="🎰 spinning…";
   document.getElementById("slotResult").classList.remove("show");
 
   const reel=document.getElementById("slotReel");
-  const winIdx=Math.floor(Math.random()*nicknames.length);
-  const winName=nicknames[winIdx];
+  const totalRows = reel.children.length;
+  const winIdx = Math.floor(Math.random()*nicknames.length);
+  currentSlotName = nicknames[winIdx];
 
-  // total distance: extra loops + land on winIdx row
-  const extraLoops = 4 + Math.floor(Math.random()*3);
-  const totalItems = extraLoops * nicknames.length + winIdx;
-  const totalDist = totalItems * ITEM_H;
+  // spin at least 5 full loops then land exactly on winIdx
+  const loopItems = 6 * nicknames.length;
+  // target: land so winIdx is centered (offset by 1 item to center in 36px window)
+  const targetPos = (reel._pos || 0) + loopItems + winIdx;
+  // clamp so we don't go past the reel
+  const safeTarget = Math.min(targetPos, (totalRows - 3) * ITEM_H);
+  const dist = safeTarget - (reel._pos || 0);
 
-  const startOffset = reel._offset;
-  const endOffset = startOffset + totalDist;
-
-  const duration = 2200;
+  const duration = 2400;
   const startTime = performance.now();
+  const startPos = reel._pos || 0;
 
-  // easing: fast start, slow finish
   function easeOutQuint(t){return 1-Math.pow(1-t,5);}
 
   function animate(now){
-    const elapsed = Math.min(now - startTime, duration);
-    const progress = elapsed / duration;
-    const eased = easeOutQuint(progress);
-    const current = startOffset + (endOffset - startOffset) * eased;
-    reel.style.transform = `translateY(-${current}px)`;
-    if(progress < 1){
+    const elapsed = Math.min(now-startTime, duration);
+    const t = elapsed/duration;
+    const eased = easeOutQuint(t);
+    const pos = startPos + dist*eased;
+    reel.style.transform = `translateY(-${pos}px)`;
+    if(t < 1){
       requestAnimationFrame(animate);
     } else {
-      reel._offset = endOffset;
+      reel._pos = startPos + dist;
       slotSpinning=false;
-      btn.disabled=false;btn.textContent="✨ Pull again!";
+      btn.disabled=false; btn.textContent="✨ Pull again!";
       const res=document.getElementById("slotResult");
-      res.textContent="Today you're my "+winName+" 💚";
+      res.textContent="Today you're my "+currentSlotName+" 💚";
       res.classList.add("show");
       spawnConfetti(window.innerWidth/2,300);
     }
@@ -549,14 +550,25 @@ function showRandomPhoto(){
 let nudgeCooldownEnd=0;
 async function sendNudge(){
   const now=Date.now();
-  if(now<nudgeCooldownEnd){document.getElementById("nudgeStatus").textContent="hold on! wait "+(Math.ceil((nudgeCooldownEnd-now)/1000))+"s 😅";return;}
+  if(now<nudgeCooldownEnd){
+    document.getElementById("nudgeStatus").textContent="hold on! wait "+(Math.ceil((nudgeCooldownEnd-now)/1000))+"s 😅";
+    return;
+  }
   nudgeCooldownEnd=now+30000;
   document.getElementById("nudgeStatus").textContent="sending your nudge... 💌";
+  // Use no-cors mode so browser doesn't block it
   try{
-    await fetch("https://ntfy.sh/"+NTFY_TOPIC,{method:"POST",headers:{"Title":"💚 from Anwitha","Priority":"default","Tags":"green_heart"},body:"im thinking of you :)"});
+    await fetch("https://ntfy.sh/"+NTFY_TOPIC,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Title":"💚 Anwitha is thinking of you","Tags":"green_heart,revolving_hearts"},
+      body:"im thinking of you right now 🥹💚"
+    });
     document.getElementById("nudgeStatus").textContent="nudge sent! he'll see it soon 🥹💚";
     spawnConfetti(window.innerWidth/2,window.innerHeight/2);
-  }catch(e){document.getElementById("nudgeStatus").textContent="hmm something went wrong 😕";}
+  }catch(e){
+    document.getElementById("nudgeStatus").textContent="hmm, check your connection 😕";
+  }
   setTimeout(()=>{document.getElementById("nudgeStatus").textContent="";},5000);
 }
 
@@ -572,24 +584,39 @@ function fartButton(e){
     el.style.animationDelay=(i*.1)+"s";document.body.appendChild(el);setTimeout(()=>el.remove(),1200);
   }
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const sr=ctx.sampleRate, dur=0.6+Math.random()*0.5;
-    const buf=ctx.createBuffer(1,sr*dur,sr);
-    const data=buf.getChannelData(0);
-    // layered fart: low rumble + sputtering flutter + noise
-    for(let i=0;i<data.length;i++){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    const ctx=new AC();
+    const sr=ctx.sampleRate;
+    const variants=[
+      {dur:0.45,baseFreq:62,mod:18,modRate:3.1,flutterRate:22,decay:4.2},
+      {dur:0.75,baseFreq:48,mod:25,modRate:1.8,flutterRate:30,decay:3.0},
+      {dur:0.55,baseFreq:70,mod:12,modRate:4.5,flutterRate:18,decay:5.0},
+    ];
+    const v=variants[Math.floor(Math.random()*variants.length)];
+    const buf=ctx.createBuffer(1,sr*v.dur,sr);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
       const t=i/sr;
-      const env=Math.exp(-t*3.5)*(1+0.6*Math.sin(2*Math.PI*t*14+Math.sin(2*Math.PI*t*7)));
-      const rumble=Math.sin(2*Math.PI*(55+20*Math.sin(2*Math.PI*t*2.5))*t);
-      const flutter=(Math.random()*2-1)*Math.pow(Math.max(0,1-t/dur),0.4);
-      const wet=(Math.random()*2-1)*0.15;
-      data[i]=env*(rumble*0.55+flutter*0.35+wet)*0.55;
+      const tNorm=t/v.dur;
+      // exponential decay envelope with flutter bumps
+      const env=Math.pow(1-tNorm,1.5)*Math.exp(-t*v.decay);
+      // frequency modulated sine for the "brap" tone
+      const freq=v.baseFreq+v.mod*Math.sin(2*Math.PI*v.modRate*t);
+      const tone=Math.sin(2*Math.PI*freq*t+1.5*Math.sin(2*Math.PI*freq*0.5*t));
+      // random flutter noise for the wet sputtering
+      const noise=(Math.random()*2-1);
+      const flutter=noise*(0.5+0.5*Math.sin(2*Math.PI*v.flutterRate*t));
+      d[i]=env*(tone*0.6+flutter*0.45)*0.8;
     }
     const src=ctx.createBufferSource();src.buffer=buf;
-    const gain=ctx.createGain();gain.gain.value=0.7;
-    // low-pass to make it sound wet/bassy
-    const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=600;filter.Q.value=1.2;
-    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);src.start();
+    const g=ctx.createGain();g.gain.value=1.0;
+    const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=520;lp.Q.value=2.5;
+    const dist=ctx.createWaveShaper();
+    const curve=new Float32Array(256);
+    for(let i=0;i<256;i++){const x=i*2/256-1;curve[i]=x<0?-Math.pow(-x,0.7):Math.pow(x,0.7);}
+    dist.curve=curve;
+    src.connect(dist);dist.connect(lp);lp.connect(g);g.connect(ctx.destination);
+    src.start();
   }catch(err){}
   showToast("💨 toot toot 💀");
 }
