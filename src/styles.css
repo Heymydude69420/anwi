@@ -1494,13 +1494,6 @@ html[data-phase="dusk"] .starfield {
   opacity: 1;
 }
 
-.constellation-link {
-  stroke: var(--red);
-  stroke-width: 0.18;
-  opacity: 0.28;
-  stroke-dasharray: 0.8 1.2;
-}
-
 .constellation-readout {
   display: flex;
   flex-direction: column;
@@ -1579,4 +1572,96 @@ html[data-phase="dusk"] .starfield {
   .cine-stage {
     min-height: 240px;
   }
+}
+
+/* ===== Constellation: spiral, zoom & pan ===== */
+
+.constellation-sky {
+  cursor: grab;
+  /* Claim the gesture so a pinch zooms the spiral instead of the page. */
+  touch-action: none;
+  user-select: none;
+}
+
+.constellation-sky:active {
+  cursor: grabbing;
+}
+
+/* The line through every day, in order — what makes the sequence readable. */
+.constellation-thread {
+  fill: none;
+  stroke: var(--red);
+  opacity: 0.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.constellation-star[data-today="true"] {
+  fill: var(--green-deep);
+  opacity: 1;
+}
+
+.constellation-today {
+  fill: none;
+  stroke: var(--green-deep);
+  opacity: 0.9;
+  animation: todayPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes todayPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.25; }
+}
+
+.constellation-label {
+  fill: var(--ink-muted);
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: var(--font-body);
+}
+
+.constellation-controls {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.constellation-controls button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  transition: all var(--dur) var(--ease);
+}
+
+.constellation-controls button:hover {
+  color: var(--red);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.constellation-zoom {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--r-full);
 }
