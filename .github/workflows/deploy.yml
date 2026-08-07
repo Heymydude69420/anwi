@@ -30,11 +30,8 @@ jobs:
 
       - run: npm run build
 
-      # Vite already emits public/anwithas-corner.html, which redirects her old
-      # bookmark to the rebuilt app. The admin page is still the hand-written
-      # one, so it ships as-is alongside the build.
-      - name: Carry the admin page into the build
-        run: cp -f ayush-admin.html dist/ 2>/dev/null || true
+      # Both legacy filenames are emitted from public/ as redirects now, so
+      # there is nothing left to copy in by hand.
 
       - uses: actions/upload-pages-artifact@v3
         with:

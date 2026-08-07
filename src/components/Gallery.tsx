@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { pickForToday, todayKey } from "../lib/daily";
 import { addPhotos, allPhotos, removePhoto, type UploadedPhoto } from "../lib/photoStore";
+import { useContent } from "../lib/useContent";
 import { useToast } from "./Toast";
 
 interface ManifestEntry {
@@ -22,6 +23,7 @@ export function Gallery() {
   const lastArchive = useRef<string>("");
   const fileInput = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const { content } = useContent();
 
   // Object URLs are revoked on unmount; leaking them keeps the blobs alive.
   const urls = useRef(new Map<string, string>());
@@ -59,7 +61,8 @@ export function Gallery() {
     setShown({
       kind: "archive",
       src: `${import.meta.env.BASE_URL}${next.full}`,
-      label: "one of my favourites of you 💚",
+      // Captions come from content.json, written in the admin panel.
+      label: content.captions[next.id]?.trim() || "one of my favourites of you 💚",
     });
   };
 

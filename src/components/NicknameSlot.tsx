@@ -1,45 +1,55 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { confetti } from "../lib/confetti";
 import { pickForToday } from "../lib/daily";
-
-const NICKNAMES = ["sweetie pie", "pumpkin pie", "muffin", "cupcake", "peanut", "buttercup"];
+import { useContent } from "../lib/useContent";
 
 const ITEM_H = 40;
 const WINDOW_H = 80;
-/** Centres the landed row inside the window instead of hanging it off the top. */
+/** Centres the landed row in the window instead of hanging it off the top. */
 const CENTER_OFFSET = (WINDOW_H - ITEM_H) / 2;
 const REPEATS = 30;
-const MIDDLE = Math.floor(REPEATS / 2) * NICKNAMES.length;
 
 export function NicknameSlot() {
+  const { content, ready } = useContent();
+  const nicknames = content.nicknames;
+
   const reel = useRef<HTMLDivElement>(null);
-  const index = useRef(MIDDLE);
+  const index = useRef(0);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+
+  // Reel geometry follows however many nicknames are configured, so adding one
+  // in the admin panel doesn't leave the strip mis-measured.
+  const middle = useMemo(
+    () => Math.floor(REPEATS / 2) * Math.max(1, nicknames.length),
+    [nicknames.length],
+  );
 
   const translateFor = (i: number) => `translateY(-${i * ITEM_H - CENTER_OFFSET}px)`;
 
   useEffect(() => {
     const node = reel.current;
-    if (!node) return;
+    if (!node || !ready) return;
+    index.current = middle;
     node.style.transition = "none";
-    node.style.transform = translateFor(MIDDLE);
-  }, []);
+    node.style.transform = translateFor(middle);
+  }, [ready, middle]);
 
   const spin = () => {
     const node = reel.current;
-    if (!node || spinning) return;
+    if (!node || spinning || nicknames.length === 0) return;
 
     setSpinning(true);
     setResult(null);
 
-    const chosen = (Math.random() * NICKNAMES.length) | 0;
-    const loops = NICKNAMES.length * (6 + ((Math.random() * 3) | 0));
-    const delta = (chosen - (index.current % NICKNAMES.length) + NICKNAMES.length) % NICKNAMES.length;
+    const chosen = Math.floor(Math.random() * nicknames.length);
+    const loops = nicknames.length * (6 + Math.floor(Math.random() * 3));
+    const delta =
+      (chosen - (index.current % nicknames.length) + nicknames.length) % nicknames.length;
     const target = index.current + loops + delta;
 
-    // Two frames: the first commits the no-transition starting position, the
-    // second applies the animated transform. Collapsing them into one frame
+    // Two frames: the first commits the starting position with no transition,
+    // the second applies the animated transform. Collapsing them into one frame
     // makes the browser skip the transition entirely.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -49,22 +59,22 @@ export function NicknameSlot() {
     });
 
     const settle = () => {
-      // Snap back into the middle of the strip so repeated spins can never
-      // run off the end of the rendered list and leave the window blank.
-      const reset = MIDDLE + (target % NICKNAMES.length);
+      // Snap back to the middle of the strip so repeated spins can never run
+      // off the end of the rendered list and leave the window blank.
+      const reset = middle + (target % nicknames.length);
       node.style.transition = "none";
       node.style.transform = translateFor(reset);
       index.current = reset;
 
       setSpinning(false);
-      setResult(NICKNAMES[chosen]);
+      setResult(nicknames[chosen]);
       confetti(window.innerWidth / 2, window.innerHeight / 2.6);
     };
 
     node.addEventListener("transitionend", settle, { once: true });
   };
 
-  const suggestion = pickForToday(NICKNAMES, "nickname");
+  const suggestion = pickForToday(nicknames, "nickname");
 
   return (
     <div className="card card-full" style={{ marginBottom: "1.1rem" }}>
@@ -75,7 +85,7 @@ export function NicknameSlot() {
           <div className="slot-band" style={{ height: ITEM_H }} />
           <div className="slot-reel" ref={reel}>
             {Array.from({ length: REPEATS }).flatMap((_, r) =>
-              NICKNAMES.map((name) => (
+              nicknames.map((name) => (
                 <div className="slot-item" key={`${r}-${name}`} style={{ height: ITEM_H }}>
                   {name}
                 </div>
@@ -84,12 +94,12 @@ export function NicknameSlot() {
           </div>
         </div>
 
-        <button className="btn btn-primary slot-btn" onClick={spin} disabled={spinning}>
+        <button className="btn btn-primary slot-btn" onClick={spin} disabled={spinning || !ready}>
           {spinning ? "🎰 spinning…" : result ? "✨ Pull again!" : "✨ Pull!"}
         </button>
 
         <div className="slot-result" data-show={result !== null}>
-          {result ? `Today you're my ${result} 💚` : ` `}
+          {result ? `Today you're my ${result} 💚` : " "}
         </div>
 
         {!result && suggestion && (

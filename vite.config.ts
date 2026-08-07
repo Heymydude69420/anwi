@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -22,5 +23,16 @@ export default defineConfig({
     include: ["react", "react-dom", "react-dom/client", "react-router-dom", "framer-motion"],
   },
 
-  build: { outDir: "dist", assetsDir: "assets" },
+  build: {
+    outDir: "dist",
+    assetsDir: "assets",
+    rollupOptions: {
+      // Two entry points: her corner and the admin panel. Keeping them separate
+      // means the admin bundle never ships to her, and each keeps its own gate.
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
+      },
+    },
+  },
 });

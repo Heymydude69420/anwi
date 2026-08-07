@@ -11,14 +11,31 @@ import { useState } from "react";
  */
 const PASSWORD = "pumpkin";
 
-export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
+interface LockScreenProps {
+  onUnlock: () => void;
+  /** Defaults to her password; the admin page passes its own. */
+  password?: string;
+  title?: string;
+  blurb?: string;
+  emoji?: string;
+  cta?: string;
+}
+
+export function LockScreen({
+  onUnlock,
+  password = PASSWORD,
+  title = "Psst… it's locked 💚",
+  blurb = "This is a special place just for you.\nEnter the secret password to get in 🥹",
+  emoji = "🔒",
+  cta = "Open Sesame 💕",
+}: LockScreenProps) {
   const [value, setValue] = useState("");
   const [reveal, setReveal] = useState(false);
   const [error, setError] = useState("");
   const shake = useAnimationControls();
 
   const submit = () => {
-    if (value === PASSWORD) {
+    if (value === password) {
       onUnlock();
       return;
     }
@@ -44,14 +61,18 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
           animate={{ scale: [1, 1.18, 1, 1.12, 1] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         >
-          🔒
+          {emoji}
         </motion.span>
 
-        <h1>Psst… it's locked 💚</h1>
+        <h1>{title}</h1>
+        {/* Newlines in the blurb become line breaks. */}
         <p>
-          This is a special place just for you.
-          <br />
-          Enter the secret password to get in 🥹
+          {blurb.split("\n").map((line, i) => (
+            <span key={i}>
+              {i > 0 && <br />}
+              {line}
+            </span>
+          ))}
         </p>
 
         <motion.div className="lock-field" animate={shake}>
@@ -75,7 +96,7 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         </motion.div>
 
         <button className="btn btn-primary" onClick={submit}>
-          Open Sesame 💕
+          {cta}
         </button>
 
         <div className="lock-error">{error}</div>

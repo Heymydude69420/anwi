@@ -27,7 +27,7 @@ const MAX_RADIUS = 44;
 const TURNS = 13;
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 9;
+const MAX_SCALE = 2;
 
 /**
  * Archimedean spiral, parameterised so consecutive days sit a constant distance
@@ -132,7 +132,7 @@ const StarLayer = memo(function StarLayer({
             key={star.day}
             cx={star.x}
             cy={star.y}
-            r={star.milestone ? 1.1 : marked ? 0.85 : 0.42}
+            r={star.milestone ? 1.45 : marked ? 1.15 : 0.62}
             className="constellation-star"
             data-milestone={star.milestone}
             data-marked={marked}
@@ -303,7 +303,7 @@ export function Constellation() {
 
   const focusToday = () => {
     if (!today) return;
-    const scale = 5;
+    const scale = MAX_SCALE;
     applyView({ scale, x: CENTRE - today.x * scale, y: CENTRE - today.y * scale });
     setActive(today);
   };
@@ -340,7 +340,7 @@ export function Constellation() {
           />
           <StarLayer stars={stars} revealed={revealed} todayDay={todayDay} onPick={pick} />
           {today && revealed >= stars.length && (
-            <circle cx={today.x} cy={today.y} r={1.9} className="constellation-today" />
+            <circle cx={today.x} cy={today.y} r={2.4} className="constellation-today" />
           )}
         </g>
       </svg>

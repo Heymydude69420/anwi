@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { usePhotos, type Photo } from "../lib/usePhotos";
+import { useContent } from "../lib/useContent";
 
 /**
  * The photo wall.
@@ -12,6 +13,7 @@ import { usePhotos, type Photo } from "../lib/usePhotos";
  */
 export function PhotoWall() {
   const { photos, loading } = usePhotos();
+  const { content } = useContent();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const open = openIndex === null ? null : photos[openIndex];
@@ -102,6 +104,9 @@ export function PhotoWall() {
               }}
             >
               <img src={`${import.meta.env.BASE_URL}${open.full}`} alt="" draggable={false} />
+              {content.captions[open.id]?.trim() && (
+                <figcaption className="lightbox-caption">{content.captions[open.id]}</figcaption>
+              )}
             </motion.div>
 
             <motion.div
